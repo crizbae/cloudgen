@@ -40,10 +40,9 @@ def add_wispy_clouds(img, clusters, base_color):
         max_radius = int(max_radius * CLOUD_SCALE)
 
         for _ in range(sublumps):
-            distortion_x = random.randint(-cluster_radius // 3, cluster_radius // 3)
-            distortion_y = random.randint(-cluster_radius // 3, cluster_radius // 3)
-            spread_x = random.randint(-cluster_radius, cluster_radius) + distortion_x
-            spread_y = random.randint(-cluster_radius, cluster_radius) + distortion_y
+            spread_x = random.randint(-cluster_radius, cluster_radius)
+            spread_y = random.randint(-cluster_radius, cluster_radius)
+
             sub_cx = cx + spread_x
             sub_cy = cy + spread_y
             r_sublump = random.randint(max_radius // 2, max_radius)
@@ -55,14 +54,14 @@ def add_wispy_clouds(img, clusters, base_color):
 
             for x in range(x_min, x_max):
                 for y in range(y_min, y_max):
-                    dx = (x - sub_cx) + random.randint(-2, 2)  
-                    dy = (y - sub_cy) + random.randint(-2, 2)  
-                    dist = (dx**2 + dy**2)**0.5  
+                    dx = x - sub_cx
+                    dy = y - sub_cy
+                    dist = (dx**2 + dy**2)**0.5
 
                     if dist <= r_sublump:
                         shade_factor = dist / r_sublump
-                        shade_factor += random.uniform(-0.15, 0.15)  
-                        shade_factor = max(0.3, min(1, shade_factor))  
+                        shade_factor = max(0.3, min(1, shade_factor))
+ 
 
                         if (x, y) in shading_map:
                             shade_factor = (shading_map[(x, y)] + shade_factor) / 2  
