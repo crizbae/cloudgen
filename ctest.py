@@ -1,6 +1,7 @@
 import random
 from PIL import Image
 import os
+import math
 
 CLOUD_SCALE = 2
 
@@ -40,6 +41,7 @@ def add_wispy_clouds(img, clusters, base_color):
         max_radius = int(max_radius * CLOUD_SCALE)
 
         for _ in range(sublumps):
+            alpha_base = random.uniform(0.4, 0.8)
             spread_x = random.randint(-cluster_radius, cluster_radius)
             spread_y = random.randint(-cluster_radius, cluster_radius)
 
@@ -56,23 +58,22 @@ def add_wispy_clouds(img, clusters, base_color):
                 for y in range(y_min, y_max):
                     dx = x - sub_cx
                     dy = y - sub_cy
-                    dist = (dx**2 + dy**2)**0.5
+                    dist = (dx**2 + dy**2) ** 0.5
 
                     if dist <= r_sublump:
-                        shade_factor = dist / r_sublump
-                        shade_factor = max(0.3, min(1, shade_factor))
- 
+                        normalized_dist = dist / r_sublump
+                        feather = 0.5 * (1 + math.cos(normalized_dist * math.pi))  
+                        feather = max(0, min(1, feather))
 
-                        if (x, y) in shading_map:
-                            shade_factor = (shading_map[(x, y)] + shade_factor) / 2  
+                        r_old, g_old, b_old = pixels[x, y]
+                        alpha = feather * 0.6  
 
-                        shading_map[(x, y)] = shade_factor
-
-                        r = int(r_base * shade_factor)
-                        g = int(g_base * shade_factor)
-                        b = int(b_base * shade_factor)
+                        r = int(r_base * alpha + r_old * (1 - alpha))
+                        g = int(g_base * alpha + g_old * (1 - alpha))
+                        b = int(b_base * alpha + b_old * (1 - alpha))
 
                         pixels[x, y] = (r, g, b)
+
 
 def main():
     final_width, final_height = 2400, 3200
