@@ -16,20 +16,36 @@ def get_unique_filename(base_name="cloud", extension="png", folder="clouds"):
             return full_path
         counter += 1
 
-
-def create_low_res_gradient(width, height, top_color, bottom_color):
+def create_low_res_gradient(width, height):
     img = Image.new("RGB", (width, height))
     pixels = img.load()
-    
+
+    top_sky = (70, 130, 180)      
+    mid_sky = (173, 216, 230)     
+    horizon_sky = (250, 250, 250) 
+
+    horizon_line = int(height * 0.80)  
+    fog_line = height  
+
     for y in range(height):
-        t = y / (height - 1)
-        r = int(top_color[0] + (bottom_color[0] - top_color[0]) * t)
-        g = int(top_color[1] + (bottom_color[1] - top_color[1]) * t)
-        b = int(top_color[2] + (bottom_color[2] - top_color[2]) * t)
+        if y < horizon_line:
+            blend = y / horizon_line
+            r = int(top_sky[0] * (1 - blend) + mid_sky[0] * blend)
+            g = int(top_sky[1] * (1 - blend) + mid_sky[1] * blend)
+            b = int(top_sky[2] * (1 - blend) + mid_sky[2] * blend)
+        else:
+            blend = (y - horizon_line) / (fog_line - horizon_line)
+            blend = min(1.0, max(0.0, blend))
+            r = int(mid_sky[0] * (1 - blend) + horizon_sky[0] * blend)
+            g = int(mid_sky[1] * (1 - blend) + horizon_sky[1] * blend)
+            b = int(mid_sky[2] * (1 - blend) + horizon_sky[2] * blend)
+
         for x in range(width):
             pixels[x, y] = (r, g, b)
-    
+
     return img
+
+
 
 def add_wispy_clouds(img, clusters, base_color):
     wind_strength = random.uniform(1, 3)  
@@ -101,7 +117,7 @@ def main():
     bottom_sky = (240, 240, 240)  
     cloud_color = (255, 255, 255)  
     
-    low_res_img = create_low_res_gradient(low_width, low_height, top_sky, bottom_sky)
+    low_res_img = create_low_res_gradient(low_width, low_height)
     
     clusters = [
         (int(low_width * 0.15), int(low_height * 0.10), 16, 14, 9),  
