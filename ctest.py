@@ -6,13 +6,16 @@ import math
 CLOUD_SCALE = 2
 
 
-def get_unique_filename(base_name="cloud", extension="png"):
+def get_unique_filename(base_name="cloud", extension="png", folder="clouds"):
+    os.makedirs(folder, exist_ok=True)  
     counter = 1
     while True:
         filename = f"{base_name}{counter}.{extension}"
-        if not os.path.exists(filename):
-            return filename
+        full_path = os.path.join(folder, filename)
+        if not os.path.exists(full_path):
+            return full_path
         counter += 1
+
 
 def create_low_res_gradient(width, height, top_color, bottom_color):
     img = Image.new("RGB", (width, height))
@@ -29,6 +32,8 @@ def create_low_res_gradient(width, height, top_color, bottom_color):
     return img
 
 def add_wispy_clouds(img, clusters, base_color):
+    wind_strength = random.uniform(1, 3)  
+
     pixels = img.load()
     w, h = img.size
     r_base, g_base, b_base = base_color
@@ -56,23 +61,33 @@ def add_wispy_clouds(img, clusters, base_color):
 
             for x in range(x_min, x_max):
                 for y in range(y_min, y_max):
-                    dx = x - sub_cx
-                    dy = y - sub_cy
+                    wind_x = int(wind_strength * math.sin(y / 20))
+                    wind_y = int(wind_strength * math.cos(x / 25))
+                    dx = (x - sub_cx) + wind_x
+                    dy = (y - sub_cy) + wind_y
+
                     dist = (dx**2 + dy**2) ** 0.5
 
                     if dist <= r_sublump:
                         normalized_dist = dist / r_sublump
-                        feather = 0.5 * (1 + math.cos(normalized_dist * math.pi))  
+                        feather = 0.5 * (1 + math.cos(normalized_dist * math.pi))
                         feather = max(0, min(1, feather))
 
+                        light_angle = math.atan2(-1, -1)  
+                        angle = math.atan2(dy, dx)
+                        lighting = math.cos(angle - light_angle) * 0.3  
+                        brightness = feather + lighting  
+                        brightness = max(0.2, min(1, brightness))
+
                         r_old, g_old, b_old = pixels[x, y]
-                        alpha = feather * 0.6  
+                        alpha = brightness * 0.6  
 
                         r = int(r_base * alpha + r_old * (1 - alpha))
                         g = int(g_base * alpha + g_old * (1 - alpha))
                         b = int(b_base * alpha + b_old * (1 - alpha))
 
                         pixels[x, y] = (r, g, b)
+
 
 
 def main():
@@ -109,10 +124,10 @@ def main():
     
     final_img = low_res_img.resize((final_width, final_height), Image.NEAREST)
     
-    filename = get_unique_filename("cloud", "png")
+    filename = get_unique_filename("cloud", "png", "clouds")
     final_img.save(filename)
     print(f"Saved image as {filename}")
-    final_img.show()
+
 
 if __name__ == "__main__":
     main()
