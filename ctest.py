@@ -1,13 +1,12 @@
 import random
-from PIL import Image
+from PIL import Image, ImageFilter
 import os
 import math
 
 CLOUD_SCALE = 2
 
-
 def get_unique_filename(base_name="cloud", extension="png", folder="clouds"):
-    os.makedirs(folder, exist_ok=True)  
+    os.makedirs(folder, exist_ok=True)
     counter = 1
     while True:
         filename = f"{base_name}{counter}.{extension}"
@@ -20,12 +19,12 @@ def create_low_res_gradient(width, height):
     img = Image.new("RGB", (width, height))
     pixels = img.load()
 
-    top_sky = (70, 130, 180)      
-    mid_sky = (173, 216, 230)     
-    horizon_sky = (250, 250, 250) 
+    top_sky = (70, 130, 180)
+    mid_sky = (173, 216, 230)
+    horizon_sky = (250, 250, 250)
 
-    horizon_line = int(height * 0.80)  
-    fog_line = height  
+    horizon_line = int(height * 0.80)
+    fog_line = height
 
     for y in range(height):
         if y < horizon_line:
@@ -45,16 +44,13 @@ def create_low_res_gradient(width, height):
 
     return img
 
-
-
-def add_wispy_clouds(img, clusters, base_color):
-    wind_strength = random.uniform(1, 3)  
+def add_wispy_clouds(img, clusters, base_color, opacity_multiplier=1.0):
+    wind_strength = random.uniform(1, 3)
+    warp_strength = 3
 
     pixels = img.load()
     w, h = img.size
     r_base, g_base, b_base = base_color
-
-    shading_map = {}
 
     for (cx, cy, cluster_radius, sublumps, max_radius) in clusters:
         cluster_radius = int(cluster_radius * CLOUD_SCALE)
@@ -79,8 +75,9 @@ def add_wispy_clouds(img, clusters, base_color):
                 for y in range(y_min, y_max):
                     wind_x = int(wind_strength * math.sin(y / 20))
                     wind_y = int(wind_strength * math.cos(x / 25))
-                    dx = (x - sub_cx) + wind_x
-                    dy = (y - sub_cy) + wind_y
+                    warp = math.sin(x / 10) * math.cos(y / 15) * warp_strength
+                    dx = (x - sub_cx) + wind_x + warp
+                    dy = (y - sub_cy) + wind_y + warp
 
                     dist = (dx**2 + dy**2) ** 0.5
 
@@ -89,14 +86,11 @@ def add_wispy_clouds(img, clusters, base_color):
                         feather = 0.5 * (1 + math.cos(normalized_dist * math.pi))
                         feather = max(0, min(1, feather))
 
-                        light_angle = math.atan2(-1, -1)  
-                        angle = math.atan2(dy, dx)
-                        lighting = math.cos(angle - light_angle) * 0.3  
-                        brightness = feather + lighting  
+                        brightness = feather
                         brightness = max(0.2, min(1, brightness))
 
                         r_old, g_old, b_old = pixels[x, y]
-                        alpha = brightness * 0.6  
+                        alpha = brightness * 0.6 * opacity_multiplier
 
                         r = int(r_base * alpha + r_old * (1 - alpha))
                         g = int(g_base * alpha + g_old * (1 - alpha))
@@ -104,46 +98,42 @@ def add_wispy_clouds(img, clusters, base_color):
 
                         pixels[x, y] = (r, g, b)
 
-
-
 def main():
     final_width, final_height = 2400, 3200
-    scale_factor = 6 
+    scale_factor = 6
 
     low_width = final_width // scale_factor
     low_height = final_height // scale_factor
 
-    top_sky = (173, 216, 230)  
-    bottom_sky = (240, 240, 240)  
-    cloud_color = (255, 255, 255)  
-    
+    cloud_color = (255, 255, 245)  
     low_res_img = create_low_res_gradient(low_width, low_height)
-    
+
     clusters = [
-        (int(low_width * 0.15), int(low_height * 0.10), 16, 14, 9),  
-        (int(low_width * 0.30), int(low_height * 0.20), 20, 18, 10),  
-        (int(low_width * 0.70), int(low_height * 0.18), 18, 16, 9),  
-        (int(low_width * 0.85), int(low_height * 0.25), 24, 22, 12),  
-        (int(low_width * 0.10), int(low_height * 0.40), 14, 12, 8),  
-        (int(low_width * 0.50), int(low_height * 0.30), 22, 20, 11),  
-        (int(low_width * 0.30), int(low_height * 0.60), 20, 18, 10),  
-        (int(low_width * 0.85), int(low_height * 0.50), 25, 22, 13),  
-        (int(low_width * 0.60), int(low_height * 0.65), 18, 15, 9),  
-        (int(low_width * 0.35), int(low_height * 0.80), 26, 24, 14),  
-        (int(low_width * 0.75), int(low_height * 0.75), 22, 20, 11),  
-        (int(low_width * 0.50), int(low_height * 0.90), 28, 26, 15),  
-        (int(low_width * 0.95), int(low_height * 0.85), 16, 14, 9),  
-        (int(low_width * 0.20), int(low_height * 0.95), 25, 23, 12),  
+        (int(low_width * 0.15), int(low_height * 0.10), 16, 14, 9),
+        (int(low_width * 0.30), int(low_height * 0.20), 20, 18, 10),
+        (int(low_width * 0.70), int(low_height * 0.18), 18, 16, 9),
+        (int(low_width * 0.85), int(low_height * 0.25), 24, 22, 12),
+        (int(low_width * 0.10), int(low_height * 0.40), 14, 12, 8),
+        (int(low_width * 0.50), int(low_height * 0.30), 22, 20, 11),
+        (int(low_width * 0.30), int(low_height * 0.60), 20, 18, 10),
+        (int(low_width * 0.85), int(low_height * 0.50), 25, 22, 13),
+        (int(low_width * 0.60), int(low_height * 0.65), 18, 15, 9),
+        (int(low_width * 0.35), int(low_height * 0.80), 26, 24, 14),
+        (int(low_width * 0.75), int(low_height * 0.75), 22, 20, 11),
+        (int(low_width * 0.50), int(low_height * 0.90), 28, 26, 15),
+        (int(low_width * 0.95), int(low_height * 0.85), 16, 14, 9),
+        (int(low_width * 0.20), int(low_height * 0.95), 25, 23, 12),
     ]
-    
-    add_wispy_clouds(low_res_img, clusters, cloud_color)
-    
-    final_img = low_res_img.resize((final_width, final_height), Image.NEAREST)
-    
+
+    add_wispy_clouds(low_res_img, clusters, cloud_color, opacity_multiplier=0.4)
+    add_wispy_clouds(low_res_img, clusters, cloud_color, opacity_multiplier=1.0)
+
+    final_img = low_res_img.resize((final_width, final_height), Image.BICUBIC)
+    final_img = final_img.filter(ImageFilter.GaussianBlur(radius=0.3))
+
     filename = get_unique_filename("cloud", "png", "clouds")
     final_img.save(filename)
     print(f"Saved image as {filename}")
-
 
 if __name__ == "__main__":
     main()
