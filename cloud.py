@@ -93,7 +93,6 @@ def add_wispy_clouds(img, clusters, base_color, opacity_multiplier=1.0):
                         pixels[x, y] = (r, g, b)
 
 
-
 def main():
     final_width, final_height = 2400, 3200
     scale_factor = 6
