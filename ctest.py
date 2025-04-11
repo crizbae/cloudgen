@@ -77,9 +77,8 @@ def add_wispy_clouds(img, clusters, base_color, opacity_multiplier=1.0):
 
                     if dist <= r_sublump:
                         normalized_dist = dist / r_sublump
-                        feather = 0.5 * (1 + math.cos(normalized_dist * math.pi))  # Classic cosine falloff
+                        feather = 0.5 * (1 + math.cos(normalized_dist * math.pi)) 
 
-                        # Subtle altitude brightness boost
                         altitude_factor = 1.0 - (y / h)
                         brightness = feather * (0.95 + 0.05 * altitude_factor)
 
@@ -87,7 +86,6 @@ def add_wispy_clouds(img, clusters, base_color, opacity_multiplier=1.0):
 
                         r_old, g_old, b_old = pixels[x, y]
 
-                        # Keep base white color and blend
                         r = int(r_base * alpha + r_old * (1 - alpha))
                         g = int(g_base * alpha + g_old * (1 - alpha))
                         b = int(b_base * alpha + b_old * (1 - alpha))

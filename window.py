@@ -135,19 +135,16 @@ def main():
     final_width, final_height = DEFAULT_WIDTH, DEFAULT_HEIGHT
     scale_factor = SCALE_FACTOR
 
-    # Generate the cloud image first
     final_img = generate_cloud_image(final_width, final_height, scale_factor)
 
-    # Create Tkinter window with exact size of the image
     window = tk.Tk()
     window.title("clouds :o")
     window.geometry(f"{final_width}x{final_height}")
     window.configure(background='black')
 
-    # Convert PIL image to Tkinter-compatible image
     tk_img = ImageTk.PhotoImage(final_img)
     label = tk.Label(window, image=tk_img)
-    label.image = tk_img  # prevent garbage collection
+    label.image = tk_img  
     label.pack()
 
     window.mainloop()
