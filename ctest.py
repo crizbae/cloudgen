@@ -3,6 +3,7 @@ from PIL import Image, ImageFilter
 import os
 import math
 
+
 CLOUD_SCALE = 2
 
 def get_unique_filename(base_name="cloud", extension="png", folder="clouds"):
@@ -45,9 +46,6 @@ def create_low_res_gradient(width, height):
     return img
 
 def add_wispy_clouds(img, clusters, base_color, opacity_multiplier=1.0):
-    wind_strength = random.uniform(1, 3)
-    warp_strength = 3
-
     pixels = img.load()
     w, h = img.size
     r_base, g_base, b_base = base_color
@@ -58,7 +56,7 @@ def add_wispy_clouds(img, clusters, base_color, opacity_multiplier=1.0):
         max_radius = int(max_radius * CLOUD_SCALE)
 
         for _ in range(sublumps):
-            alpha_base = random.uniform(0.4, 0.8)
+            alpha_base = random.uniform(0.5, 0.9)
             spread_x = random.randint(-cluster_radius, cluster_radius)
             spread_y = random.randint(-cluster_radius, cluster_radius)
 
@@ -73,30 +71,30 @@ def add_wispy_clouds(img, clusters, base_color, opacity_multiplier=1.0):
 
             for x in range(x_min, x_max):
                 for y in range(y_min, y_max):
-                    wind_x = int(wind_strength * math.sin(y / 20))
-                    wind_y = int(wind_strength * math.cos(x / 25))
-                    warp = math.sin(x / 10) * math.cos(y / 15) * warp_strength
-                    dx = (x - sub_cx) + wind_x + warp
-                    dy = (y - sub_cy) + wind_y + warp
-
+                    dx = x - sub_cx
+                    dy = y - sub_cy
                     dist = (dx**2 + dy**2) ** 0.5
 
                     if dist <= r_sublump:
                         normalized_dist = dist / r_sublump
-                        feather = 0.5 * (1 + math.cos(normalized_dist * math.pi))
-                        feather = max(0, min(1, feather))
+                        feather = 0.5 * (1 + math.cos(normalized_dist * math.pi))  # Classic cosine falloff
 
-                        brightness = feather
-                        brightness = max(0.2, min(1, brightness))
+                        # Subtle altitude brightness boost
+                        altitude_factor = 1.0 - (y / h)
+                        brightness = feather * (0.95 + 0.05 * altitude_factor)
 
-                        r_old, g_old, b_old = pixels[x, y]
                         alpha = brightness * 0.6 * opacity_multiplier
 
+                        r_old, g_old, b_old = pixels[x, y]
+
+                        # Keep base white color and blend
                         r = int(r_base * alpha + r_old * (1 - alpha))
                         g = int(g_base * alpha + g_old * (1 - alpha))
                         b = int(b_base * alpha + b_old * (1 - alpha))
 
                         pixels[x, y] = (r, g, b)
+
+
 
 def main():
     final_width, final_height = 2400, 3200
