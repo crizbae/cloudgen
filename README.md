@@ -11,3 +11,5 @@ CloudGen is useful for:
 The project includes:
 - Clouds 😎
 
+/clouds contains clouds it has generated as the code has progressed
+
